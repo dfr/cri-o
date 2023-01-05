@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# PROVIDE: crio
+# REQUIRE: DAEMON
+
+# Add the following lines to /etc/rc.conf to enable `crio':
+#
+# crio_enable="YES"
+#
+
+. /etc/rc.subr
+
+name="crio"
+rcvar=crio_enable
+
+load_rc_config "$name"
+: ${crio_enable="NO"}
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+command="/usr/sbin/daemon"
+crio_command="/usr/local/bin/crio"
+pidfile="/var/run/$name.pid"
+command_args="-S -p ${pidfile} ${crio_command} --log /var/log/crio.log"
+procname="/usr/local/bin/crio"
+
+run_rc_command "$1"
