@@ -292,6 +292,10 @@ install.config-nobuild: ## Install the configuration files.
 	install ${SELINUXOPT} -m 644 crio.conf $(ETCDIR_CRIO)/crio.conf
 	install ${SELINUXOPT} -m 644 crio-umount.conf $(OCIUMOUNTINSTALLDIR)/crio-umount.conf
 	install ${SELINUXOPT} -m 644 crictl.yaml $(CRICTL_CONFIG_DIR)
+ifeq ($(shell uname -s),FreeBSD)
+	install -d $(ETCDIR)/rc.d
+	install -m 755 contrib/freebsd/crio $(ETCDIR)/rc.d
+endif
 
 .PHONY: install.config
 install.config: crio.conf install.config-nobuild ## Build and install the configuration files.
