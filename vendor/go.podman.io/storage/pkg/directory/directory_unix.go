@@ -5,6 +5,7 @@ package directory
 import (
 	"errors"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"syscall"
 )
@@ -22,7 +23,12 @@ func Size(dir string) (size int64, err error) {
 func Usage(dir string) (*DiskUsage, error) {
 	usage := &DiskUsage{}
 	data := make(map[uint64]struct{})
-	err := filepath.WalkDir(dir, func(d string, entry fs.DirEntry, err error) error {
+	rootInfo, err := os.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	rootDev := rootInfo.Sys().(*syscall.Stat_t).Dev
+	err = filepath.WalkDir(dir, func(d string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			// if dir does not exist, Usage() returns the error.
 			// if dir/x disappeared while walking, Usage() ignores dir/x.
@@ -38,6 +44,13 @@ func Usage(dir string) (*DiskUsage, error) {
 				return nil
 			}
 			return err
+		}
+
+		// Don't cross mount points. This avoids unexpected results if
+		// the directory is a running container.
+		dev := fileInfo.Sys().(*syscall.Stat_t).Dev
+		if dev != rootDev {
+			return filepath.SkipDir
 		}
 
 		// Check inode to only count the sizes of files with multiple hard links once.
