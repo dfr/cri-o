@@ -490,7 +490,14 @@ func (d *Driver) Put(id string) error {
 // ReadWriteDiskUsage returns the disk usage of the writable directory for the ID.
 // For ZFS, it queries the full mount path for this ID.
 func (d *Driver) ReadWriteDiskUsage(id string) (*directory.DiskUsage, error) {
-	return directory.Usage(d.mountPath(id))
+	// InodeCount doesn't make much sense on ZFS which allocates objects
+	// dynamically. We could get this from ZFS as projectobjused@<project>
+	// but that would require adding a quota. Alternatively, we could diff
+	// the layer and count changes.
+	return &directory.DiskUsage{
+		Size:       int64(d.dataset.Used),
+		InodeCount: 0,
+	}, nil
 }
 
 // Exists checks to see if the cache entry exists for the given id.
