@@ -1,5 +1,3 @@
-//go:build !linux && !freebsd
-
 package oci
 
 import (
@@ -7,6 +5,7 @@ import (
 	"os"
 	"syscall"
 
+	"github.com/cri-o/cri-o/internal/config/jail"
 	types "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -24,8 +23,20 @@ func newPipe() (*os.File, *os.File, error) {
 	return os.Pipe()
 }
 
-func (r *runtimeOCI) containerStats(ctr *Container, cgroup string) (*types.ContainerStats, error) {
-	return nil, nil
+func (r *runtimeOCI) containerStats(ctr *Container, jailName string) (*types.ContainerStats, error) {
+	stats := &types.ContainerStats{
+		Attributes: ctr.CRIAttributes(),
+	}
+
+	if ctr.Spoofed() {
+		return stats, nil
+	}
+
+	if err := jail.PopulateContainerStats(jailName, stats); err != nil {
+		return nil, err
+	}
+
+	return stats, nil
 }
 
 // CleanupConmonCgroup cleans up conmon's group when using cgroupfs.
