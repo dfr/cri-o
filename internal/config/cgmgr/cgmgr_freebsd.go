@@ -1,9 +1,16 @@
-//go:build !linux && !freebsd
-
 package cgmgr
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+	"unsafe"
+
+	"github.com/sirupsen/logrus"
 )
 
 type CgroupManager interface {
@@ -27,6 +34,34 @@ type CgroupManager interface {
 }
 
 type NullCgroupManager struct{}
+
+func getRacct(filter string) (map[string]uint64, error) {
+	bp, err := syscall.ByteSliceFromString(filter)
+	if err != nil {
+		return nil, err
+	}
+	var buf [1024]byte
+	_, _, errno := syscall.Syscall6(syscall.SYS_RCTL_GET_RACCT,
+		uintptr(unsafe.Pointer(&bp[0])),
+		uintptr(len(bp)),
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(len(buf)), 0, 0)
+	if errno != 0 {
+		return nil, fmt.Errorf("error calling rctl_get_racct with filter %s: %v", errno)
+	}
+	len := bytes.IndexByte(buf[:], byte(0))
+	entries := strings.Split(string(buf[:len]), ",")
+	res := make(map[string]uint64)
+	for _, entry := range entries {
+		key, valstr, _ := strings.Cut(entry, "=")
+		val, err := strconv.ParseUint(valstr, 10, 0)
+		if err != nil {
+			logrus.Warnf("unexpected rctl entry, ignoring: %s", entry)
+		}
+		res[key] = val
+	}
+	return res, nil
+}
 
 func InitializeCgroupManager(cgroupManager string) (CgroupManager, error) {
 	return nil, errors.New("not implemented yet")
@@ -68,7 +103,31 @@ func (*NullCgroupManager) SandboxCgroupPath(string, string, int64) string {
 }
 
 func (*NullCgroupManager) ContainerCgroupStats(sbParent, containerID string) (*CgroupStats, error) {
-	return nil, nil
+	stats := &CgroupStats{
+		SystemNano: time.Now().UnixNano(),
+	}
+
+	entries, err := getRacct("jail:" + sbParent)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read accounting for %s: %w", containerID, err)
+	}
+
+	stats.CPU = &CPUStats{}
+	if val, ok := entries["cputime"]; ok {
+		// Cumulative CPU time, in seconds. XXX add 1 to make
+		// metrics-server happy - it treats zero cpu usage as a failure
+		stats.CPU.TotalUsageNano = val*1000000000 + 1
+	}
+	stats.Memory = &MemoryStats{}
+	if val, ok := entries["memoryuse"]; ok {
+		stats.Memory.WorkingSetBytes = val
+		stats.Memory.RssBytes = val
+	}
+	if val, ok := entries["vmemoryuse"]; ok {
+		stats.Memory.MaxUsage = val
+	}
+
+	return stats, nil
 }
 
 func (*NullCgroupManager) RemoveSandboxCgroup(sbParent, containerID string) error {
