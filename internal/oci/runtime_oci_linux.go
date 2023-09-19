@@ -10,6 +10,8 @@ import (
 	"github.com/containernetworking/plugins/pkg/ns"
 
 	"github.com/cri-o/cri-o/internal/log"
+	rspec "github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
 )
 
 // PortForwardContainer forwards the specified port into the provided container.
@@ -105,4 +107,8 @@ func (r *runtimeOCI) PortForwardContainer(ctx context.Context, c *Container, net
 	log.Infof(ctx, "Finished port forwarding for %q on port %d", c.ID(), port)
 
 	return nil
+}
+
+func setPipeOwner(fd int, u rspec.User) error {
+	return unix.Fchown(fd, int(u.UID), int(u.GID))
 }
