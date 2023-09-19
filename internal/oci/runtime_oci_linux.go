@@ -14,6 +14,8 @@ import (
 	"github.com/containernetworking/plugins/pkg/ns"
 
 	"github.com/cri-o/cri-o/internal/log"
+	rspec "github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
 )
 
 // PortForwardContainer forwards the specified port into the provided container.
@@ -123,4 +125,8 @@ func setSysProcAttr(cmd *exec.Cmd, fd uintptr) {
 		UseCgroupFD: true,
 		CgroupFD:    int(fd),
 	}
+}
+
+func setPipeOwner(fd int, u rspec.User) error {
+	return unix.Fchown(fd, int(u.UID), int(u.GID))
 }
