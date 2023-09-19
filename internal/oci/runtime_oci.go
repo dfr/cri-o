@@ -474,7 +474,7 @@ func (r *runtimeOCI) ExecContainer(ctx context.Context, c *Container, cmd []stri
 
 			u := c.Spec().Process.User
 			// Change the owner for the pipe to the user in the container
-			if err := unix.Fchown(int(r.Fd()), int(u.UID), int(u.GID)); err != nil {
+			if err := setPipeOwner(int(r.Fd()), u); err != nil {
 				return err
 			}
 
