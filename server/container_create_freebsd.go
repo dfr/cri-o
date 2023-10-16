@@ -131,6 +131,30 @@ func (s *Server) addOCIBindMounts(ctx context.Context, ctr ctrfactory.Container,
 			options = []string{"ro"}
 		}
 
+		// mount propagation
+		//
+		// Ignore this for the most part but may revisit if/when FreeBSD
+		// supports linux-style bind mounts in some way.
+		switch m.Propagation {
+		case types.MountPropagation_PROPAGATION_PRIVATE:
+			options = append(options, "rprivate")
+			// Since default root propagation in runc is rprivate ignore
+			// setting the root propagation
+		case types.MountPropagation_PROPAGATION_BIDIRECTIONAL:
+			//if err := ensureShared(src, mountInfos); err != nil {
+			//	return nil, nil, err
+			//}
+			options = append(options, "rshared")
+		case types.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+			//if err := ensureSharedOrSlave(src, mountInfos); err != nil {
+			//	return nil, nil, err
+			//}
+			options = append(options, "rslave")
+		default:
+			log.Warnf(ctx, "Unknown propagation mode for hostPath %q", m.HostPath)
+			options = append(options, "rprivate")
+		}
+
 		volumes = append(volumes, oci.ContainerVolume{
 			ContainerPath:  dest,
 			HostPath:       src,
