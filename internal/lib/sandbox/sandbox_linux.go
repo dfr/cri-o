@@ -11,6 +11,15 @@ import (
 	"github.com/cri-o/cri-o/internal/log"
 )
 
+var requiredPlatformValidations = map[string]sandboxValidations{
+	"sandbox shmPath":              validationSetShmPath,
+	"sandbox setCgroupParent":      validationSetCgroupParent,
+	"sandbox setPrivileged":        validationSetPrivileged,
+	"sandbox setUsernsMode":        validationSetUsernsMode,
+	"sandbox setPodLinuxOverhead":  validationSetPodLinuxOverhead,
+	"sandbox setPodLinuxResources": validationSetPodLinuxResources,
+}
+
 // UnmountShm removes the shared memory mount for the sandbox and returns an
 // error if any failure occurs.
 func (s *Sandbox) UnmountShm(ctx context.Context) error {

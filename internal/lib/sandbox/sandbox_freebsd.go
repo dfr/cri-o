@@ -7,6 +7,8 @@ import (
 	types "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
+var requiredPlatformValidations = map[string]sandboxValidations{}
+
 func (n *NetNs) Initialize() (*NetNs, error) {
 	return &NetNs{}, fmt.Errorf("netns is not implemented for this platform")
 }

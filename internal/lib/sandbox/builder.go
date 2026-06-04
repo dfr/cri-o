@@ -219,26 +219,20 @@ const allValidations sandboxValidations = validationSetCRISandbox |
 
 // If not all validations are set, check which ones are missing.
 var requiredValidations = map[string]sandboxValidations{
-	"cri-o sandbox":                validationSetCRISandbox,
-	"createdAt time":               validationSetCreatedAt,
-	"sandbox id":                   validationSetID,
-	"sandbox name":                 validationSetName,
-	"sandbox logDir":               validationSetLogDir,
-	"sandbox shmPath":              validationSetShmPath,
-	"sandbox setNamespace":         validationSetNamespace,
-	"sandbox setKubeName":          validationSetKubeName,
-	"sandbox setProcessLabel":      validationSetProcessLabel,
-	"sandbox setMountLabel":        validationSetMountLabel,
-	"sandbox setCgroupParent":      validationSetCgroupParent,
-	"sandbox setPrivileged":        validationSetPrivileged,
-	"sandbox setRuntimeHandler":    validationSetRuntimeHandler,
-	"sandbox setResolvPath":        validationSetResolvPath,
-	"sandbox setHostname":          validationSetHostname,
-	"sandbox setPortMappings":      validationSetPortMappings,
-	"sandbox setHostNetwork":       validationSetHostNetwork,
-	"sandbox setUsernsMode":        validationSetUsernsMode,
-	"sandbox setPodLinuxOverhead":  validationSetPodLinuxOverhead,
-	"sandbox setPodLinuxResources": validationSetPodLinuxResources,
+	"cri-o sandbox":             validationSetCRISandbox,
+	"createdAt time":            validationSetCreatedAt,
+	"sandbox id":                validationSetID,
+	"sandbox name":              validationSetName,
+	"sandbox logDir":            validationSetLogDir,
+	"sandbox setNamespace":      validationSetNamespace,
+	"sandbox setKubeName":       validationSetKubeName,
+	"sandbox setProcessLabel":   validationSetProcessLabel,
+	"sandbox setMountLabel":     validationSetMountLabel,
+	"sandbox setRuntimeHandler": validationSetRuntimeHandler,
+	"sandbox setResolvPath":     validationSetResolvPath,
+	"sandbox setHostname":       validationSetHostname,
+	"sandbox setPortMappings":   validationSetPortMappings,
+	"sandbox setHostNetwork":    validationSetHostNetwork,
 }
 
 // Validate validates the sandbox.
@@ -249,6 +243,11 @@ func (b *sandboxBuilder) Validate() error {
 	}
 
 	for field, flag := range requiredValidations {
+		if !b.validations.isValidationSet(flag) {
+			return errors.New(field + " not set")
+		}
+	}
+	for field, flag := range requiredPlatformValidations {
 		if !b.validations.isValidationSet(flag) {
 			return errors.New(field + " not set")
 		}
