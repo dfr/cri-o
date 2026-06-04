@@ -39,3 +39,23 @@ func (c *container) SelinuxLabel(sboxLabel string) ([]string, error) {
 
 	return ret, nil
 }
+
+// getOCICapabilitiesList returns a list of all available capabilities.
+func getOCICapabilitiesList() ([]string, error) {
+	caps := make([]string, 0, len(capability.ListKnown()))
+
+	lastCap, err := capability.LastCap()
+	if err != nil {
+		return nil, fmt.Errorf("get last capability: %w", err)
+	}
+
+	for _, cap := range capability.ListKnown() {
+		if cap > lastCap {
+			continue
+		}
+
+		caps = append(caps, "CAP_"+strings.ToUpper(cap.String()))
+	}
+
+	return caps, nil
+}
