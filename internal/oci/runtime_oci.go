@@ -25,7 +25,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/crutils"
 	"go.podman.io/storage/pkg/pools"
-	"golang.org/x/sys/unix"
 	kwait "k8s.io/apimachinery/pkg/util/wait"
 	types "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-streaming/pkg/streaming/remotecommand"

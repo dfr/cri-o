@@ -3,6 +3,7 @@ package oci
 import (
 	"context"
 	"os"
+	"os/exec"
 	"syscall"
 
 	//"github.com/cri-o/cri-o/internal/config/jail"
@@ -50,4 +51,8 @@ func (c *Container) SetSeccompProfilePath(pp string) {
 // SeccompProfilePath returns the seccomp profile path
 func (c *Container) SeccompProfilePath() string {
 	return ""
+}
+
+// setSysProcAttr is a no-op on non-Linux platforms.
+func setSysProcAttr(_ *exec.Cmd, _ uintptr) {
 }
