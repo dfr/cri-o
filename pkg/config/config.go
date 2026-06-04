@@ -612,7 +612,7 @@ type RuntimeConfig struct {
 	HostNetworkDisableSELinux bool `toml:"hostnetwork_disable_selinux"`
 
 	// Option to disable hostport mapping in CRI-O
-	// Default value is 'false'
+	// Default value is 'false' on linux, 'true' otherwise
 	DisableHostPortMapping bool `toml:"disable_hostport_mapping"`
 
 	// Option to set the timezone inside the container.
@@ -1154,7 +1154,7 @@ func DefaultRuntimeConfig(cgroupManager cgmgr.CgroupManager) *RuntimeConfig {
 		rdtConfig:                   rdt.New(),
 		ulimitsConfig:               ulimits.New(),
 		HostNetworkDisableSELinux:   true,
-		DisableHostPortMapping:      false,
+		DisableHostPortMapping:      defaultDisableHostPortMapping,
 		EnableCriuSupport:           true,
 	}
 }

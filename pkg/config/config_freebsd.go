@@ -37,6 +37,8 @@ const (
 	ImageVolumesBind ImageVolumesType = "nullfs"
 	// DefaultPauseImage is default pause image
 	DefaultPauseImage string = "quay.io/dougrabson/pause:latest"
+
+	defaultDisableHostPortMapping = true
 )
 
 func selinuxEnabled() bool {
