@@ -11,7 +11,9 @@ import (
 	"unsafe"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
+	types "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 const sysctlName = "kern.proc.pid"
@@ -50,6 +52,25 @@ func getPidStatDataFromSysctl(pid int) (string, error) {
 }
 
 // SetRuntimeUser sets the runtime user for the container.
-func (c *Container) SetRuntimeUser(spec *specs.Spec) {
-	// No-op.
+func (c *Container) SetRuntimeUser(runtimeSpec *specs.Spec) {
+	if runtimeSpec.Process == nil {
+		logrus.Infof("Container %s is missing process attribute from the runtime specification", c.ID())
+
+		return
+	}
+
+	user := runtimeSpec.Process.User
+	supplementalGroups := make([]int64, 0, len(user.AdditionalGids))
+
+	for _, gid := range user.AdditionalGids {
+		supplementalGroups = append(supplementalGroups, int64(gid))
+	}
+
+	c.runtimeUser = &types.ContainerUser{
+		Linux: &types.LinuxContainerUser{
+			Uid:                int64(user.UID),
+			Gid:                int64(user.GID),
+			SupplementalGroups: supplementalGroups,
+		},
+	}
 }

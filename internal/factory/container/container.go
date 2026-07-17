@@ -808,10 +808,12 @@ func (c *container) SpecSetPrivileges(ctx context.Context, securityContext *type
 	}
 
 	if securityContext.GetNoNewPrivs() {
-		const sysAdminCap = "CAP_SYS_ADMIN"
-		for _, cap := range specgen.Config.Process.Capabilities.Bounding {
-			if cap == sysAdminCap {
-				log.Warnf(ctx, "Setting `noNewPrivileges` flag has no effect because container has %s capability", sysAdminCap)
+		if specgen.Config.Process.Capabilities != nil {
+			const sysAdminCap = "CAP_SYS_ADMIN"
+			for _, cap := range specgen.Config.Process.Capabilities.Bounding {
+				if cap == sysAdminCap {
+					log.Warnf(ctx, "Setting `noNewPrivileges` flag has no effect because container has %s capability", sysAdminCap)
+				}
 			}
 		}
 

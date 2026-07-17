@@ -29,10 +29,23 @@ func (s *Server) finalizeUserMapping(sb *sandbox.Sandbox, specgen *generate.Gene
 // this function takes a container config and makes sure its SecurityContext
 // is not nil. If it is, it makes sure to set default values for every field.
 func setContainerConfigSecurityContext(containerConfig *types.ContainerConfig) *types.LinuxContainerSecurityContext {
-	return &types.LinuxContainerSecurityContext{
-		NamespaceOptions: &types.NamespaceOption{},
-		SelinuxOptions:   &types.SELinuxOption{},
+	if containerConfig.GetLinux() == nil {
+		containerConfig.Linux = &types.LinuxContainerConfig{}
 	}
+
+	if containerConfig.GetLinux().GetSecurityContext() == nil {
+		containerConfig.Linux.SecurityContext = newLinuxContainerSecurityContext()
+	}
+
+	if containerConfig.GetLinux().GetSecurityContext().GetNamespaceOptions() == nil {
+		containerConfig.Linux.SecurityContext.NamespaceOptions = &types.NamespaceOption{}
+	}
+
+	if containerConfig.GetLinux().GetSecurityContext().GetSelinuxOptions() == nil {
+		containerConfig.Linux.SecurityContext.SelinuxOptions = &types.SELinuxOption{}
+	}
+
+	return containerConfig.GetLinux().GetSecurityContext()
 }
 
 func disableFipsForContainer(ctr ctrfactory.Container, containerDir string) error {
@@ -179,6 +192,18 @@ func addShmMount(ctr ctrfactory.Container, sb *sandbox.Sandbox) {
 
 // setupSystemdMounts is a no-op on FreeBSD as systemd is not supported.
 func setupSystemdMounts(g *generate.Generator) {
+}
+
+func newLinuxContainerSecurityContext() *types.LinuxContainerSecurityContext {
+	return &types.LinuxContainerSecurityContext{
+		Capabilities:     &types.Capability{},
+		NamespaceOptions: &types.NamespaceOption{},
+		SelinuxOptions:   &types.SELinuxOption{},
+		RunAsUser:        &types.Int64Value{},
+		RunAsGroup:       &types.Int64Value{},
+		Seccomp:          &types.SecurityProfile{},
+		Apparmor:         &types.SecurityProfile{},
+	}
 }
 
 // Returns the spec Generator for the container, with some values set.
